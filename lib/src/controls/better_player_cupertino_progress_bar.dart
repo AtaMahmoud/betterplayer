@@ -4,6 +4,8 @@ import 'package:better_player/src/video_player/video_player_platform_interface.d
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
+import '../../better_player.dart';
+
 class BetterPlayerCupertinoVideoProgressBar extends StatefulWidget {
   BetterPlayerCupertinoVideoProgressBar(
     this.controller, {
@@ -57,6 +59,13 @@ class _VideoProgressBarState
       final Offset tapPos = box.globalToLocal(globalPosition);
       final double relative = tapPos.dx / box.size.width;
       final Duration position = controller.value.duration * relative;
+      
+      final controlsConfiguration = BetterPlayerController.of(context)
+          .betterPlayerConfiguration.controlsConfiguration;
+
+      if (controlsConfiguration.maxAllowedSeek != 0 &&
+          position.inSeconds > controlsConfiguration.maxAllowedSeek) return;
+
       controller.seekTo(position);
     }
 

@@ -62,6 +62,13 @@ class _VideoProgressBarState
       final Offset tapPos = box.globalToLocal(globalPosition);
       final double relative = tapPos.dx / box.size.width;
       final Duration position = controller.value.duration * relative;
+
+      final controlsConfiguration = betterPlayerController
+          .betterPlayerConfiguration.controlsConfiguration;
+
+      if (controlsConfiguration.maxAllowedSeek != 0 &&
+          position.inSeconds > controlsConfiguration.maxAllowedSeek) return;
+          
       betterPlayerController.seekTo(position);
     }
 

@@ -91,6 +91,9 @@ class BetterPlayerControlsConfiguration {
   ///Live text color;
   final Color liveTextColor;
 
+  // property to set the seek limit of the user
+  final int maxAllowedSeek;
+
   const BetterPlayerControlsConfiguration(
       {this.controlBarColor = Colors.black87,
       this.textColor = Colors.white,
@@ -120,6 +123,7 @@ class BetterPlayerControlsConfiguration {
       this.defaultErrorText = "Video can't be played",
       this.loadingNextVideoText = "Loading next video",
       this.liveText = "LIVE",
+      this.maxAllowedSeek = 0,
       this.liveTextColor = Colors.red});
 
   factory BetterPlayerControlsConfiguration.white() {
