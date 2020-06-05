@@ -165,13 +165,13 @@ class _BetterPlayerCupertinoControlsState
                     )
                   : Row(
                       children: <Widget>[
-                        _controlsConfiguration.enablePlayPause
+                        _controlsConfiguration.enableSkipBack
                             ? _buildSkipBack(iconColor, barHeight)
                             : const SizedBox(),
                         _controlsConfiguration.enablePlayPause
                             ? _buildPlayPause(_controller, iconColor, barHeight)
                             : const SizedBox(),
-                        _controlsConfiguration.enablePlayPause
+                        _controlsConfiguration.enableSkipForward
                             ? _buildSkipForward(iconColor, barHeight)
                             : const SizedBox(),
                         _controlsConfiguration.enableProgressText

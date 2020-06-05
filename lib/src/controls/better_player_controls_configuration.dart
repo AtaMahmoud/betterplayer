@@ -94,6 +94,12 @@ class BetterPlayerControlsConfiguration {
   // property to set the seek limit of the user
   final int maxAllowedSeek;
 
+  // flag used to enable/disable skip back
+  final bool enableSkipBack;
+
+  //flag used to enable disable skip forward
+  final bool enableSkipForward;
+
   const BetterPlayerControlsConfiguration(
       {this.controlBarColor = Colors.black87,
       this.textColor = Colors.white,
@@ -124,6 +130,8 @@ class BetterPlayerControlsConfiguration {
       this.loadingNextVideoText = "Loading next video",
       this.liveText = "LIVE",
       this.maxAllowedSeek = 0,
+      this.enableSkipBack=false,
+      this.enableSkipForward=false,
       this.liveTextColor = Colors.red});
 
   factory BetterPlayerControlsConfiguration.white() {
