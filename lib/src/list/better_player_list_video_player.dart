@@ -1,6 +1,7 @@
 import 'package:better_player/better_player.dart';
 import 'package:better_player/src/configuration/better_player_configuration.dart';
 import 'package:better_player/src/configuration/better_player_data_source.dart';
+import 'package:better_player/src/list/better_player_list_video_player_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_widgets/flutter_widgets.dart';
 
@@ -22,11 +23,15 @@ class BetterPlayerListVideoPlayer extends StatefulWidget {
   ///Flag to determine if video should be auto paused
   final bool autoPause;
 
+  final BetterPlayerListVideoPlayerController
+      betterPlayerListVideoPlayerController;
+
   const BetterPlayerListVideoPlayer(this.dataSource,
       {this.configuration = const BetterPlayerConfiguration(),
       this.playFraction = 0.6,
       this.autoPlay = true,
       this.autoPause = true,
+      this.betterPlayerListVideoPlayerController,
       Key key})
       : assert(dataSource != null, "Data source can't be null"),
         assert(configuration != null, "Configuration can't be null"),
@@ -54,6 +59,11 @@ class _BetterPlayerListVideoPlayerState
       widget.configuration,
       betterPlayerDataSource: widget.dataSource,
     );
+    if (widget.betterPlayerListVideoPlayerController != null) {
+      widget.betterPlayerListVideoPlayerController
+          .setBetterPlayerController(_betterPlayerController);
+    }
+
     super.initState();
   }
 
