@@ -111,36 +111,26 @@ static void* playbackBufferFullContext = &playbackBufferFullContext;
 }
 
 - (void)clear {
-  _displayLink.paused = YES;
-  _isInitialized = false;
-  _isPlaying = false;
-  _disposed = false;
-  _videoOutput = nil;
-  _failedCount = 0;
-  _key = nil;
-  if (_player.currentItem == nil) {
-    return;
-  }
-
-  if (_player.currentItem == nil) {
-    return;
-  }
-  [[_player currentItem] removeObserver:self forKeyPath:@"status" context:statusContext];
-  [[_player currentItem] removeObserver:self
-                             forKeyPath:@"loadedTimeRanges"
-                                context:timeRangeContext];
-  [[_player currentItem] removeObserver:self
-                             forKeyPath:@"playbackLikelyToKeepUp"
-                                context:playbackLikelyToKeepUpContext];
-  [[_player currentItem] removeObserver:self
-                             forKeyPath:@"playbackBufferEmpty"
-                                context:playbackBufferEmptyContext];
-  [[_player currentItem] removeObserver:self
-                             forKeyPath:@"playbackBufferFull"
-                                context:playbackBufferFullContext];
-  [[NSNotificationCenter defaultCenter] removeObserver:self];
-  AVAsset* asset = [_player.currentItem asset];
-  [asset cancelLoading];
+    _displayLink.paused = YES;
+    _isInitialized = false;
+    _isPlaying = false;
+    _disposed = false;
+    _videoOutput = nil;
+    _failedCount = 0;
+    _key = nil;
+    if (_player.currentItem == nil) {
+        return;
+    }
+    
+    [self clearObserver:_player observer:self andPath: @"status" Andcontext:statusContext];
+    [self clearObserver:_player observer:self andPath:@"loadedTimeRanges" Andcontext:timeRangeContext];
+    [self clearObserver:_player observer:self andPath:@"playbackLikelyToKeepUp" Andcontext:playbackLikelyToKeepUpContext];
+    [self clearObserver:_player observer:self andPath:@"playbackBufferEmpty" Andcontext:playbackBufferEmptyContext];
+    [self clearObserver:_player observer:self andPath:@"playbackBufferFull" Andcontext:playbackBufferFullContext];
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    AVAsset* asset = [_player.currentItem asset];
+    [asset cancelLoading];
 }
 
 - (void)itemDidPlayToEndTime:(NSNotification*)notification {
@@ -498,10 +488,19 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 /// is useful for the case where the Engine is in the process of deconstruction
 /// so the channel is going to die or is already dead.
 - (void)disposeSansEventChannel {
-  [self clear];
-  [_displayLink invalidate];
-  [_player replaceCurrentItemWithPlayerItem:nil];
-  [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [self clear];
+    [_displayLink invalidate];
+    [_player replaceCurrentItemWithPlayerItem:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+/// Remove Observers safely
+- (void) clearObserver: (AVPlayer*)player observer: (NSObject*)observerObj andPath: (NSString*) path Andcontext:(void *)context {
+    @try{
+       [[player currentItem] removeObserver: observerObj forKeyPath:path context: context];
+    }@catch(id anException){
+        NSLog(@"Observer not attached");
+    }
 }
 
 - (void)dispose {
