@@ -60,12 +60,6 @@ class _VideoProgressBarState
       final double relative = tapPos.dx / box.size.width;
       final Duration position = controller.value.duration * relative;
       
-      final controlsConfiguration = BetterPlayerController.of(context)
-          .betterPlayerConfiguration.controlsConfiguration;
-
-      if (controlsConfiguration.maxAllowedSeek != 0 &&
-          position.inSeconds > controlsConfiguration.maxAllowedSeek) return;
-
       controller.seekTo(position);
     }
 
