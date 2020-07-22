@@ -439,8 +439,28 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     } else if (position < const Duration()) {
       position = const Duration();
     }
+
+    if (position.inSeconds.toDouble() > value.lastWatched &&
+        value.lastWatched != 0) {
+      position = Duration(seconds: value.lastWatched.toInt());
+    }
+
     await _videoPlayerPlatform.seekTo(_textureId, position);
     _updatePosition(position);
+  }
+
+  /// Setting Seek Ability
+  ///
+  /// [enableSeeking] enable/ disable manual seeking
+  void setSeekAbility(bool enableSeeking) {
+    value = value.copyWith(enableSeeking: enableSeeking);
+  }
+
+  /// Setting Last Watched Position
+  ///
+  /// [lastWatched] is the last point in your watching process
+  void setLastwatched(double lastWatched) {
+    value = value.copyWith(lastWatched: lastWatched);
   }
 
   /// Sets the audio volume of [this].

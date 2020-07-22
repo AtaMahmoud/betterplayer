@@ -199,6 +199,14 @@ class BetterPlayerController extends ChangeNotifier {
         parameters: {_volumeParameter: volume}));
   }
 
+  void setSeekAbility(bool enableSeeking) {
+    videoPlayerController.setSeekAbility(enableSeeking);
+  }
+
+  void setLastwatched(double lastWatched) {
+    videoPlayerController.setLastwatched(lastWatched);
+  }
+
   Future<bool> isPlaying() async {
     return videoPlayerController.value.isPlaying;
   }
