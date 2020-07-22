@@ -78,7 +78,7 @@ class _VideoProgressBarState
         ),
       ),
       onHorizontalDragStart: (DragStartDetails details) {
-        if (!controller.value.initialized) {
+        if (!controller.value.initialized || !controller.value.enableSeeking ) {
           return;
         }
         _controllerWasPlaying = controller.value.isPlaying;
@@ -91,7 +91,7 @@ class _VideoProgressBarState
         }
       },
       onHorizontalDragUpdate: (DragUpdateDetails details) {
-        if (!controller.value.initialized) {
+        if (!controller.value.initialized || !controller.value.enableSeeking) {
           return;
         }
         seekToRelativePosition(details.globalPosition);
@@ -101,6 +101,7 @@ class _VideoProgressBarState
         }
       },
       onHorizontalDragEnd: (DragEndDetails details) {
+        if (!controller.value.enableSeeking) return;
         if (_controllerWasPlaying) {
           controller.play();
         }
@@ -109,7 +110,7 @@ class _VideoProgressBarState
         }
       },
       onTapDown: (TapDownDetails details) {
-        if (!controller.value.initialized) {
+        if (!controller.value.initialized || !controller.value.enableSeeking) {
           return;
         }
 

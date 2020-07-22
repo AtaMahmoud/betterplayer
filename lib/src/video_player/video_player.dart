@@ -33,6 +33,7 @@ class VideoPlayerValue {
     this.isPlaying = false,
     this.isLooping = false,
     this.isBuffering = false,
+    this.enableSeeking = false,
     this.volume = 1.0,
     this.errorDescription,
   });
@@ -70,6 +71,9 @@ class VideoPlayerValue {
 
   /// True if the video is currently buffering.
   final bool isBuffering;
+
+  /// enable/disable manual seeking
+  bool enableSeeking;
 
   /// The current volume of the playback.
   final double volume;
@@ -117,6 +121,7 @@ class VideoPlayerValue {
     bool isBuffering,
     double volume,
     String errorDescription,
+    bool enableSeeking,
   }) {
     return VideoPlayerValue(
       duration: duration ?? this.duration,
@@ -129,6 +134,7 @@ class VideoPlayerValue {
       isBuffering: isBuffering ?? this.isBuffering,
       volume: volume ?? this.volume,
       errorDescription: errorDescription ?? this.errorDescription,
+      enableSeeking: enableSeeking ?? this.enableSeeking,
     );
   }
 
