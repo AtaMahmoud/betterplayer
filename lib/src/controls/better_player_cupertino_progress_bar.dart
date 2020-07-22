@@ -37,6 +37,7 @@ class _VideoProgressBarState
 
   VoidCallback listener;
   bool _controllerWasPlaying = false;
+  bool _isSeekBack = true;
 
   VideoPlayerController get controller => widget.controller;
 
@@ -59,8 +60,19 @@ class _VideoProgressBarState
       final Offset tapPos = box.globalToLocal(globalPosition);
       final double relative = tapPos.dx / box.size.width;
       final Duration position = controller.value.duration * relative;
-      
+
       controller.seekTo(position);
+    }
+
+    bool isMovingBack(Offset newPosition, Offset currentPosition) {
+      final nBox = context.findRenderObject() as RenderBox;
+      final Offset nTapPos = nBox.globalToLocal(newPosition);
+      final double nRelative = nTapPos.dx / nBox.size.width;
+      final Duration nPosition = controller.value.duration * nRelative;
+
+      return nPosition.inSeconds < controller.value.position.inSeconds
+          ? true
+          : false;
     }
 
     return GestureDetector(
@@ -78,9 +90,13 @@ class _VideoProgressBarState
         ),
       ),
       onHorizontalDragStart: (DragStartDetails details) {
-        if (!controller.value.initialized || !controller.value.enableSeeking ) {
+        _isSeekBack =
+            isMovingBack(details.globalPosition, details.localPosition);
+        if (!controller.value.initialized ||
+            (!controller.value.enableSeeking && !_isSeekBack)) {
           return;
         }
+
         _controllerWasPlaying = controller.value.isPlaying;
         if (_controllerWasPlaying) {
           controller.pause();
@@ -91,9 +107,13 @@ class _VideoProgressBarState
         }
       },
       onHorizontalDragUpdate: (DragUpdateDetails details) {
-        if (!controller.value.initialized || !controller.value.enableSeeking) {
+        _isSeekBack =
+            isMovingBack(details.globalPosition, details.localPosition);
+        if (!controller.value.initialized ||
+            (!controller.value.enableSeeking && !_isSeekBack)) {
           return;
         }
+
         seekToRelativePosition(details.globalPosition);
 
         if (widget.onDragUpdate != null) {
@@ -101,7 +121,7 @@ class _VideoProgressBarState
         }
       },
       onHorizontalDragEnd: (DragEndDetails details) {
-        if (!controller.value.enableSeeking) return;
+        if (!controller.value.enableSeeking && !_isSeekBack) return;
         if (_controllerWasPlaying) {
           controller.play();
         }
@@ -110,7 +130,10 @@ class _VideoProgressBarState
         }
       },
       onTapDown: (TapDownDetails details) {
-        if (!controller.value.initialized || !controller.value.enableSeeking) {
+        _isSeekBack =
+            isMovingBack(details.globalPosition, details.localPosition);
+        if (!controller.value.initialized ||
+            (!controller.value.enableSeeking && !_isSeekBack)) {
           return;
         }
 

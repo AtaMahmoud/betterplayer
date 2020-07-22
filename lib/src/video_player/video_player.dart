@@ -34,6 +34,7 @@ class VideoPlayerValue {
     this.isLooping = false,
     this.isBuffering = false,
     this.enableSeeking = false,
+    this.lastWatched = 0,
     this.volume = 1.0,
     this.errorDescription,
   });
@@ -74,6 +75,9 @@ class VideoPlayerValue {
 
   /// enable/disable manual seeking
   bool enableSeeking;
+
+  /// last watched point
+  double lastWatched;
 
   /// The current volume of the playback.
   final double volume;
@@ -122,6 +126,7 @@ class VideoPlayerValue {
     double volume,
     String errorDescription,
     bool enableSeeking,
+    double lastWatched,
   }) {
     return VideoPlayerValue(
       duration: duration ?? this.duration,
@@ -135,6 +140,7 @@ class VideoPlayerValue {
       volume: volume ?? this.volume,
       errorDescription: errorDescription ?? this.errorDescription,
       enableSeeking: enableSeeking ?? this.enableSeeking,
+      lastWatched: lastWatched ?? this.lastWatched,
     );
   }
 
