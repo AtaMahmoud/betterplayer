@@ -186,6 +186,12 @@ class BetterPlayerController extends ChangeNotifier {
     await videoPlayerController.seekTo(moment);
     _postEvent(BetterPlayerEvent(BetterPlayerEventType.SEEK_TO,
         parameters: {_durationParameter: moment}));
+
+    if (videoPlayerController.value.duration == null) {
+      cancelNextVideoTimer();
+      return;
+    }
+
     if (moment > videoPlayerController.value.duration) {
       _postEvent(BetterPlayerEvent(BetterPlayerEventType.FINISHED));
     } else {
