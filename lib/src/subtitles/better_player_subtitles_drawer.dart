@@ -157,10 +157,10 @@ class _BetterPlayerSubtitlesDrawerState
   Widget _buildHtmlWidget(String text, TextStyle textStyle) {
     assert(text != null);
     assert(textStyle != null);
-    return HtmlWidget(text,
-        textStyle: textStyle,
-        bodyPadding: const EdgeInsets.all(0),
-        tableCellPadding: const EdgeInsets.all(0));
+    return HtmlWidget(
+      text,
+      textStyle: textStyle,
+    );
   }
 
   BetterPlayerSubtitlesConfiguration setupDefaultConfiguration() {

@@ -36,6 +36,7 @@ class VideoPlayerValue {
     this.enableSeeking = false,
     this.lastWatched = 0,
     this.volume = 1.0,
+    this.speed = 1.0,
     this.errorDescription,
   });
 
@@ -82,6 +83,9 @@ class VideoPlayerValue {
   /// The current volume of the playback.
   final double volume;
 
+  /// The current speed of the playback
+  final double speed;
+
   /// A description of the error if present.
   ///
   /// If [hasError] is false this is [null].
@@ -127,6 +131,7 @@ class VideoPlayerValue {
     String errorDescription,
     bool enableSeeking,
     double lastWatched,
+    double speed,
   }) {
     return VideoPlayerValue(
       duration: duration ?? this.duration,
@@ -138,6 +143,7 @@ class VideoPlayerValue {
       isLooping: isLooping ?? this.isLooping,
       isBuffering: isBuffering ?? this.isBuffering,
       volume: volume ?? this.volume,
+      speed: speed ?? this.speed,
       errorDescription: errorDescription ?? this.errorDescription,
       enableSeeking: enableSeeking ?? this.enableSeeking,
       lastWatched: lastWatched ?? this.lastWatched,
@@ -278,6 +284,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     String dataSource, {
     VideoFormat formatHint,
     Future<ClosedCaptionFile> closedCaptionFile,
+    Map<String, String> headers,
   }) {
     return _setDataSource(
       DataSource(
@@ -285,6 +292,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         uri: dataSource,
         formatHint: formatHint,
         closedCaptionFile: closedCaptionFile,
+        headers: headers,
       ),
     );
   }
@@ -333,6 +341,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     }
 
     _initializingCompleter = Completer<void>();
+
     await VideoPlayerPlatform.instance
         .setDataSource(_textureId, dataSourceDescription);
     return _initializingCompleter.future;
@@ -417,6 +426,13 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     await _videoPlayerPlatform.setVolume(_textureId, value.volume);
   }
 
+  Future<void> _applySpeed() async {
+    if (!_created || _isDisposed) {
+      return;
+    }
+    await _videoPlayerPlatform.setSpeed(_textureId, value.speed);
+  }
+
   /// The position in the current video.
   Future<Duration> get position async {
     if (!value.initialized && _isDisposed) {
@@ -470,6 +486,14 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   Future<void> setVolume(double volume) async {
     value = value.copyWith(volume: volume.clamp(0.0, 1.0));
     await _applyVolume();
+  }
+
+  /// Sets the speed of [this].
+  ///
+  /// [speed] indicates a value between 0.0 and 2.0 on a linear scale.
+  Future<void> setSpeed(double speed) async {
+    value = value.copyWith(speed: speed);
+    await _applySpeed();
   }
 
   /// The closed caption based on the current [position] in the video.

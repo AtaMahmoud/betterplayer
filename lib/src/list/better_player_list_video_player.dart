@@ -1,6 +1,7 @@
 import 'package:better_player/better_player.dart';
 import 'package:better_player/src/configuration/better_player_configuration.dart';
 import 'package:better_player/src/configuration/better_player_data_source.dart';
+import 'package:better_player/src/core/better_player_utils.dart';
 import 'package:better_player/src/list/better_player_list_video_player_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_widgets/flutter_widgets.dart';
@@ -55,20 +56,22 @@ class _BetterPlayerListVideoPlayerState
 
   @override
   void initState() {
+    super.initState();
     _betterPlayerController = BetterPlayerController(
       widget.configuration,
       betterPlayerDataSource: widget.dataSource,
+      betterPlayerPlaylistConfiguration: BetterPlayerPlaylistConfiguration(),
     );
+
     if (widget.betterPlayerListVideoPlayerController != null) {
       widget.betterPlayerListVideoPlayerController
           .setBetterPlayerController(_betterPlayerController);
     }
-
-    super.initState();
   }
 
   @override
   void dispose() {
+    _betterPlayerController.dispose();
     _isDisposing = true;
     super.dispose();
   }
@@ -77,9 +80,14 @@ class _BetterPlayerListVideoPlayerState
   Widget build(BuildContext context) {
     super.build(context);
     return VisibilityDetector(
-      child: BetterPlayer(
-        key: Key("${_getUniqueKey()}_player"),
-        controller: _betterPlayerController,
+      child: AspectRatio(
+        aspectRatio:
+            _betterPlayerController.betterPlayerConfiguration.aspectRatio ??
+                BetterPlayerUtils.calculateAspectRatio(context),
+        child: BetterPlayer(
+          key: Key("${_getUniqueKey()}_player"),
+          controller: _betterPlayerController,
+        ),
       ),
       onVisibilityChanged: (visibilityInfo) async {
         bool isPlaying = await _betterPlayerController.isPlaying();

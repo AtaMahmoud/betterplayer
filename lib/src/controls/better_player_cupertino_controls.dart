@@ -3,10 +3,11 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:better_player/src/controls/better_player_controls_configuration.dart';
+import 'package:better_player/src/controls/better_player_controls_state.dart';
 import 'package:better_player/src/controls/better_player_cupertino_progress_bar.dart';
 import 'package:better_player/src/controls/better_player_progress_colors.dart';
 import 'package:better_player/src/core/better_player_controller.dart';
-import 'package:better_player/src/core/utils.dart';
+import 'package:better_player/src/core/better_player_utils.dart';
 import 'package:better_player/src/video_player/video_player.dart';
 import 'package:flutter/material.dart';
 
@@ -30,7 +31,7 @@ class BetterPlayerCupertinoControls extends StatefulWidget {
 }
 
 class _BetterPlayerCupertinoControlsState
-    extends State<BetterPlayerCupertinoControls> {
+    extends BetterPlayerControlsState<BetterPlayerCupertinoControls> {
   VideoPlayerValue _latestValue;
   double _latestVolume;
   bool _hideStuff = true;
@@ -77,7 +78,7 @@ class _BetterPlayerCupertinoControlsState
             children: <Widget>[
               _buildTopBar(
                   backgroundColor, iconColor, barHeight, buttonPadding),
-              _isLoading()
+              isLoading(_latestValue)
                   ? Expanded(child: Center(child: _buildLoadingWidget()))
                   : _buildHitArea(),
               _buildNextVideoWidget(),
@@ -87,18 +88,6 @@ class _BetterPlayerCupertinoControlsState
         ),
       ),
     );
-  }
-
-  bool _isLoading() {
-    if (_latestValue != null) {
-      if (!_latestValue.isPlaying && _latestValue.duration == null) {
-        return true;
-      }
-      if (_latestValue.isPlaying && _latestValue.isBuffering) {
-        return true;
-      }
-    }
-    return false;
   }
 
   @override
@@ -245,7 +234,17 @@ class _BetterPlayerCupertinoControlsState
     return Expanded(
       child: GestureDetector(
         onTap: _latestValue != null && _latestValue.isPlaying
-            ? _cancelAndRestartTimer
+            ? () {
+                if (_hideStuff == true) {
+                  _cancelAndRestartTimer();
+                } else {
+                  _hideTimer?.cancel();
+
+                  setState(() {
+                    _hideStuff = true;
+                  });
+                }
+              }
             : () {
                 _hideTimer?.cancel();
 
@@ -255,6 +254,44 @@ class _BetterPlayerCupertinoControlsState
               },
         child: Container(
           color: Colors.transparent,
+        ),
+      ),
+    );
+  }
+
+  GestureDetector _buildMoreButton(
+    VideoPlayerController controller,
+    Color backgroundColor,
+    Color iconColor,
+    double barHeight,
+    double buttonPadding,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        onShowMoreClicked();
+      },
+      child: AnimatedOpacity(
+        opacity: _hideStuff ? 0.0 : 1.0,
+        duration: _controlsConfiguration.controlsHideTime,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10.0),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 10.0),
+            child: Container(
+              color: backgroundColor,
+              child: Container(
+                height: barHeight,
+                padding: EdgeInsets.symmetric(
+                  horizontal: buttonPadding,
+                ),
+                child: Icon(
+                  Icons.more_vert,
+                  color: iconColor,
+                  size: 16.0,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -336,7 +373,7 @@ class _BetterPlayerCupertinoControlsState
     return Padding(
       padding: const EdgeInsets.only(right: 12.0),
       child: Text(
-        formatDuration(position),
+        BetterPlayerUtils.formatDuration(position),
         style: TextStyle(
           color: _controlsConfiguration.textColor,
           fontSize: 12.0,
@@ -353,7 +390,7 @@ class _BetterPlayerCupertinoControlsState
     return Padding(
       padding: const EdgeInsets.only(right: 12.0),
       child: Text(
-        '-${formatDuration(position)}',
+        '-${BetterPlayerUtils.formatDuration(position)}',
         style:
             TextStyle(color: _controlsConfiguration.textColor, fontSize: 12.0),
       ),
@@ -418,12 +455,21 @@ class _BetterPlayerCupertinoControlsState
           _controlsConfiguration.enableFullscreen
               ? _buildExpandButton(
                   backgroundColor, iconColor, barHeight, buttonPadding)
-              : Container(),
+              : const SizedBox(),
           Expanded(child: Container()),
           _controlsConfiguration.enableMute
               ? _buildMuteButton(_controller, backgroundColor, iconColor,
                   barHeight, buttonPadding)
-              : Container(),
+              : const SizedBox(),
+          _controlsConfiguration.enablePlaybackSpeed
+              ? _buildMoreButton(
+                  _controller,
+                  backgroundColor,
+                  iconColor,
+                  barHeight,
+                  buttonPadding,
+                )
+              : const SizedBox(),
         ],
       ),
     );
@@ -529,25 +575,31 @@ class _BetterPlayerCupertinoControlsState
   }
 
   void _playPause() {
-    bool isFinished = _latestValue.position >= _latestValue.duration;
+    bool isFinished = false;
+
+    if (_latestValue?.position != null && _latestValue?.duration != null) {
+      isFinished = _latestValue.position >= _latestValue.duration;
+    }
 
     setState(() {
       if (_controller.value.isPlaying) {
         _hideStuff = false;
         _hideTimer?.cancel();
-        _controller.pause();
+        _betterPlayerController.pause();
       } else {
         _cancelAndRestartTimer();
 
         if (!_controller.value.initialized) {
-          /*_controller.initialize().then((_) {
-            _controller.play();
-          });*/
+          if (_betterPlayerController.betterPlayerDataSource.liveStream) {
+            _betterPlayerController.play();
+            _betterPlayerController.cancelNextVideoTimer();
+          }
         } else {
           if (isFinished) {
-            _controller.seekTo(Duration(seconds: 0));
+            _betterPlayerController.seekTo(Duration(seconds: 0));
           }
-          _controller.play();
+          _betterPlayerController.play();
+          _betterPlayerController.cancelNextVideoTimer();
         }
       }
     });
@@ -576,12 +628,15 @@ class _BetterPlayerCupertinoControlsState
   }
 
   void _updateState() {
-    setState(() {
-      _latestValue = _controller.value;
-    });
+    if (mounted) {
+      setState(() {
+        _latestValue = _controller.value;
+      });
+    }
   }
 
   void _onPlayerHide() {
+    _betterPlayerController.toggleControlsVisibility(!_hideStuff);
     widget.onControlsVisibilityChanged(!_hideStuff);
   }
 
@@ -615,4 +670,7 @@ class _BetterPlayerCupertinoControlsState
           AlwaysStoppedAnimation<Color>(_controlsConfiguration.controlBarColor),
     );
   }
+
+  @override
+  BetterPlayerController getBetterPlayerController() => _betterPlayerController;
 }

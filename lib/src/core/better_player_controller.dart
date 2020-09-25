@@ -16,6 +16,7 @@ class BetterPlayerController extends ChangeNotifier {
   static const _durationParameter = "duration";
   static const _progressParameter = "progress";
   static const _volumeParameter = "volume";
+  static const _speedParameter = "speed";
 
   final BetterPlayerConfiguration betterPlayerConfiguration;
   final BetterPlayerPlaylistConfiguration betterPlayerPlaylistConfiguration;
@@ -72,6 +73,8 @@ class BetterPlayerController extends ChangeNotifier {
   StreamController<int> nextVideoTimeStreamController =
       StreamController.broadcast();
 
+  bool _disposed = false;
+
   BetterPlayerController(this.betterPlayerConfiguration,
       {this.betterPlayerPlaylistConfiguration, this.betterPlayerDataSource})
       : assert(betterPlayerConfiguration != null,
@@ -106,7 +109,10 @@ class BetterPlayerController extends ChangeNotifier {
   void setupDataSource(BetterPlayerDataSource betterPlayerDataSource) async {
     switch (betterPlayerDataSource.type) {
       case BetterPlayerDataSourceType.NETWORK:
-        videoPlayerController.setNetworkDataSource(betterPlayerDataSource.url);
+        videoPlayerController.setNetworkDataSource(
+          betterPlayerDataSource.url,
+          headers: betterPlayerDataSource.headers,
+        );
 
         break;
       case BetterPlayerDataSourceType.FILE:
@@ -213,12 +219,27 @@ class BetterPlayerController extends ChangeNotifier {
     videoPlayerController.setLastwatched(lastWatched);
   }
 
+  Future<void> setSpeed(double speed) async {
+    if (speed < 0 || speed > 2) {
+      throw ArgumentError("Speed must be between 0 and 2");
+    }
+    await videoPlayerController.setSpeed(speed);
+    _postEvent(BetterPlayerEvent(BetterPlayerEventType.SET_SPEED,
+        parameters: {_speedParameter: speed}));
+  }
+
   Future<bool> isPlaying() async {
     return videoPlayerController.value.isPlaying;
   }
 
   bool isBuffering() {
     return videoPlayerController.value.isBuffering;
+  }
+
+  void toggleControlsVisibility(bool isVisible) {
+    _postEvent(isVisible
+        ? BetterPlayerEvent(BetterPlayerEventType.CONTROLS_VISIBLE)
+        : BetterPlayerEvent(BetterPlayerEventType.CONTROLS_HIDDEN));
   }
 
   void _postEvent(BetterPlayerEvent betterPlayerEvent) {
@@ -278,6 +299,7 @@ class BetterPlayerController extends ChangeNotifier {
           Timer.periodic(Duration(milliseconds: 1000), (_timer) async {
         if (_nextVideoTime == 1) {
           _timer.cancel();
+          _nextVideoTimer = null;
         }
         _nextVideoTime -= 1;
         nextVideoTimeStreamController.add(_nextVideoTime);
@@ -300,12 +322,15 @@ class BetterPlayerController extends ChangeNotifier {
 
   @override
   void dispose() {
-    _eventListeners.clear();
-    videoPlayerController?.removeListener(_fullScreenListener);
-    videoPlayerController?.removeListener(_onVideoPlayerChanged);
-    videoPlayerController?.dispose();
-    _nextVideoTimer?.cancel();
-    nextVideoTimeStreamController.close();
-    super.dispose();
+    if (!_disposed) {
+      _eventListeners.clear();
+      videoPlayerController?.removeListener(_fullScreenListener);
+      videoPlayerController?.removeListener(_onVideoPlayerChanged);
+      videoPlayerController?.dispose();
+      _nextVideoTimer?.cancel();
+      nextVideoTimeStreamController.close();
+      _disposed = true;
+      super.dispose();
+    }
   }
 }

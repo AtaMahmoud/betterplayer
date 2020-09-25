@@ -24,6 +24,11 @@ class _VideoListWidgetState extends State<VideoListWidget> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
@@ -41,12 +46,16 @@ class _VideoListWidgetState extends State<VideoListWidget> {
               child: BetterPlayerListVideoPlayer(
                 BetterPlayerDataSource(
                     BetterPlayerDataSourceType.NETWORK, videoListData.videoUrl),
-                configuration: BetterPlayerConfiguration(autoPlay: false),
-                key: Key(videoListData.hashCode.toString()),
+                configuration: BetterPlayerConfiguration(
+                  autoPlay: false,
+                  aspectRatio: 1,
+                  fit: BoxFit.cover,
+                ),
+                //key: Key(videoListData.hashCode.toString()),
                 playFraction: 0.8,
                 betterPlayerListVideoPlayerController: controller,
               ),
-              aspectRatio: 16 / 9),
+              aspectRatio: 1),
           Padding(
             padding: EdgeInsets.all(8),
             child: Text(

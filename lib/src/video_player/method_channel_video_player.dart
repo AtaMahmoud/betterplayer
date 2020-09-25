@@ -10,7 +10,7 @@ import 'package:flutter/widgets.dart';
 
 import 'video_player_platform_interface.dart';
 
-const MethodChannel _channel = MethodChannel('flutter.io/videoPlayer');
+const MethodChannel _channel = MethodChannel('better_player_channel');
 
 /// An implementation of [VideoPlayerPlatform] that uses method channels.
 class MethodChannelVideoPlayer extends VideoPlayerPlatform {
@@ -51,6 +51,7 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
           'key': dataSource.key,
           'uri': dataSource.uri,
           'formatHint': dataSource.rawFormalHint,
+          'headers': dataSource.headers,
         };
         break;
       case DataSourceType.file:
@@ -107,6 +108,18 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
       },
     );
   }
+
+  @override
+  Future<void> setSpeed(int textureId, double speed) {
+    return _channel.invokeMethod<void>(
+      'setSpeed',
+      <String, dynamic>{
+        'textureId': textureId,
+        'speed': speed,
+      },
+    );
+  }
+
 
   @override
   Future<void> seekTo(int textureId, Duration position) {
@@ -182,7 +195,7 @@ class MethodChannelVideoPlayer extends VideoPlayerPlatform {
   }
 
   EventChannel _eventChannelFor(int textureId) {
-    return EventChannel('flutter.io/videoPlayer/videoEvents$textureId');
+    return EventChannel('better_player_channel/videoEvents$textureId');
   }
 
   DurationRange _toDurationRange(dynamic value) {

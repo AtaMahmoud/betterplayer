@@ -19,8 +19,10 @@ This plugin is based on [Chewie](https://github.com/brianegan/chewie). Chewie is
 ✔️ Refactored player controls  
 ✔️ Playlist support  
 ✔️ Video in ListView support  
-✔️ Subtitles support (HTML tags support)
-
+✔️ Subtitles support (HTML tags support)  
+✔️ HTTP Headers support  
+✔️ BoxFit of video support  
+✔️ Playback speed support  
 
 ## Install
 
@@ -28,7 +30,7 @@ This plugin is based on [Chewie](https://github.com/brianegan/chewie). Chewie is
 
 ```yaml
 dependencies:
-  better_player: ^0.0.10
+  better_player: ^0.0.18
 ```
 
 2. Install it
@@ -228,6 +230,10 @@ Possible configuration options:
 
     ///Defines controls configuration
     final BetterPlayerControlsConfiguration controlsConfiguration;
+
+    ///Defines fit of the video, allows to fix video stretching, see possible
+    ///values here: https://api.flutter.dev/flutter/painting/BoxFit-class.html
+    final BoxFit fit;
 ```
 
 ### BetterPlayerSubtitlesConfiguration
@@ -372,6 +378,8 @@ Possible configuration options:
   ///Live text color;
   final Color liveTextColor;
 
+  ///Flag used to show/hide playback speed
+  final bool enablePlaybackSpeed;
 ```
 
 ### BetterPlayerPlaylistConfiguration
@@ -403,6 +411,7 @@ Define source for one video in your app.
         type: BetterPlayerSubtitlesSourceType.FILE,
         url: "${directory.path}/example_subtitles.srt",
       ),
+      headers: {"header":"my_custom_header"}
     );
 ```
 
@@ -419,6 +428,9 @@ Possible configuration options:
 
   ///Flag to determine if current data source is live stream
   final bool liveStream;
+
+  /// Custom headers for player
+  final Map<String, String> headers;
 ```
 
 
@@ -455,6 +467,7 @@ You can listen to video player events like:
   PROGRESS,
   FINISHED,
   EXCEPTION,
+  SET_SPEED
 ```
 
 After creating BetterPlayerController you can add event listener this way:

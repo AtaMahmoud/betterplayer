@@ -101,6 +101,11 @@ abstract class VideoPlayerPlatform {
     throw UnimplementedError('setVolume() has not been implemented.');
   }
 
+  /// Sets the video speed to a range between 0.0 and 2.0
+  Future<void> setSpeed(int textureId, double speed) {
+    throw UnimplementedError('setSpeed() has not been implemented.');
+  }
+
   /// Sets the video position to a [Duration] from the start.
   Future<void> seekTo(int textureId, Duration position) {
     throw UnimplementedError('seekTo() has not been implemented.');
@@ -144,14 +149,15 @@ class DataSource {
   ///
   /// The [closedCaptionFile] argument is optional field to specify a file
   /// containing the closed captioning.
-  DataSource({
-    @required this.sourceType,
-    this.uri,
-    this.formatHint,
-    this.asset,
-    this.package,
-    this.closedCaptionFile,
-  }) : assert(uri == null || asset == null);
+  DataSource(
+      {@required this.sourceType,
+      this.uri,
+      this.formatHint,
+      this.asset,
+      this.package,
+      this.closedCaptionFile,
+      this.headers})
+      : assert(uri == null || asset == null);
 
   /// Describes the type of data source this [VideoPlayerController]
   /// is constructed with.
@@ -202,9 +208,10 @@ class DataSource {
   /// [initialize()] is called.
   final Future<ClosedCaptionFile> closedCaptionFile;
 
+  final Map<String, String> headers;
+
   /// Key to compare DataSource
   String get key {
-    uri ?? ((package ?? "") + ":" + asset) + ":" + (formatHint ?? "");
     String result = "";
 
     if (uri != null && uri.isNotEmpty) {
@@ -216,10 +223,17 @@ class DataSource {
     }
 
     if (formatHint != null) {
-      result = "$result:${rawFormalHint}";
+      result = "$result:$rawFormalHint";
     }
 
     return result;
+  }
+
+  @override
+  String toString() {
+    return 'DataSource{sourceType: $sourceType, uri: $uri, formatHint: '
+        '$formatHint, asset: $asset, package: $package, closedCaptionFile:'
+        ' $closedCaptionFile, headers: $headers}';
   }
 }
 

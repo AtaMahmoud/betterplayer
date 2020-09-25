@@ -77,6 +77,8 @@ static void* playbackBufferFullContext = &playbackBufferFullContext;
 }
 
 - (void)addObservers:(AVPlayerItem*)item {
+    NSLog(@"AddObservers!");
+    
   [item addObserver:self forKeyPath:@"loadedTimeRanges" options:0 context:timeRangeContext];
   [item addObserver:self forKeyPath:@"status" options:0 context:statusContext];
   [item addObserver:self
@@ -233,17 +235,25 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
   return transform;
 }
 
-- (void)setDataSourceAsset:(NSString*)asset withKey:(NSString*)key {
+- (void)setDataSourceAsset:(NSString*)asset withKey:(NSString*)key{
   NSString* path = [[NSBundle mainBundle] pathForResource:asset ofType:nil];
-  return [self setDataSourceURL:[NSURL fileURLWithPath:path] withKey:key];
+    return [self setDataSourceURL:[NSURL fileURLWithPath:path] withKey:key withHeaders: @{}];
 }
 
-- (void)setDataSourceURL:(NSURL*)url withKey:(NSString*)key {
-  AVPlayerItem* item = [AVPlayerItem playerItemWithURL:url];
-  return [self setDataSourcePlayerItem:item withKey:key];
+- (void)setDataSourceURL:(NSURL*)url withKey:(NSString*)key withHeaders:(NSDictionary*)headers{
+
+    AVPlayerItem* item;
+    if (headers == [NSNull null]){
+        item = [AVPlayerItem playerItemWithURL:url];
+    } else{
+        AVURLAsset* asset = [AVURLAsset URLAssetWithURL:url
+                                                options:@{@"AVURLAssetHTTPHeaderFieldsKey" : headers}];
+        item = [AVPlayerItem playerItemWithAsset:asset];
+    }
+    return [self setDataSourcePlayerItem:item withKey:key];
 }
 
-- (void)setDataSourcePlayerItem:(AVPlayerItem*)item withKey:(NSString*)key {
+- (void)setDataSourcePlayerItem:(AVPlayerItem*)item withKey:(NSString*)key{
   _key = key;
   [_player replaceCurrentItemWithPlayerItem:item];
 
@@ -298,6 +308,9 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     AVPlayerItem* item = (AVPlayerItem*)object;
     switch (item.status) {
       case AVPlayerItemStatusFailed:
+        NSLog(@"Failed to load video:");
+        NSLog(item.error.debugDescription);
+            
         if (_eventSink != nil) {
           _eventSink([FlutterError
               errorWithCode:@"VideoError"
@@ -331,7 +344,10 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 }
 
 - (void)updatePlayingState {
+    NSLog(@"Update playing state");
+    
   if (!_isInitialized || !_key) {
+      NSLog(@"not initalized and paused!!");
     _displayLink.paused = YES;
     return;
   }
@@ -345,6 +361,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 }
 
 - (void)onReadyToPlay {
+    NSLog(@"OnReadyToPlay");
   if (_eventSink && !_isInitialized && _key) {
     if (!_player.currentItem) {
       return;
@@ -353,6 +370,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
       return;
     }
 
+      NSLog(@"Here!111");
     CGSize size = [_player currentItem].presentationSize;
     CGFloat width = size.width;
     CGFloat height = size.height;
@@ -361,8 +379,9 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     if (height == CGSizeZero.height && width == CGSizeZero.width) {
       return;
     }
+    const BOOL isLive = CMTIME_IS_INDEFINITE([_player currentItem].duration);
     // The player may be initialized but still needs to determine the duration.
-    if ([self duration] == 0) {
+    if (isLive == false && [self duration] == 0) {
       return;
     }
 
@@ -409,6 +428,31 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 
 - (void)setVolume:(double)volume {
   _player.volume = (float)((volume < 0.0) ? 0.0 : ((volume > 1.0) ? 1.0 : volume));
+}
+
+- (void)setSpeed:(double)speed result:(FlutterResult)result {
+  if (speed == 1.0 || speed == 0.0) {
+    _player.rate = speed;
+    result(nil);
+  } else if (speed < 0 || speed > 2.0) {
+    result([FlutterError errorWithCode:@"unsupported_speed"
+                               message:@"Speed must be >= 0.0 and <= 2.0"
+                               details:nil]);
+  } else if ((speed > 1.0 && _player.currentItem.canPlayFastForward) ||
+             (speed < 1.0 && _player.currentItem.canPlaySlowForward)) {
+    _player.rate = speed;
+    result(nil);
+  } else {
+    if (speed > 1.0) {
+      result([FlutterError errorWithCode:@"unsupported_fast_forward"
+                                 message:@"This video cannot be played fast forward"
+                                 details:nil]);
+    } else {
+      result([FlutterError errorWithCode:@"unsupported_slow_forward"
+                                 message:@"This video cannot be played slow forward"
+                                 details:nil]);
+    }
+  }
 }
 
 // This workaround if you will change dataSource. Flutter engine caches CVPixelBufferRef and if you
@@ -488,10 +532,15 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 /// is useful for the case where the Engine is in the process of deconstruction
 /// so the channel is going to die or is already dead.
 - (void)disposeSansEventChannel {
-    [self clear];
-    [_displayLink invalidate];
-    [_player replaceCurrentItemWithPlayerItem:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+     @try{
+        [self clear];
+        [_displayLink invalidate];
+        [_player replaceCurrentItemWithPlayerItem:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:self];
+     }
+    @catch(NSException *exception) {
+        NSLog(exception.debugDescription);
+    }
 }
 
 /// Remove Observers safely
@@ -521,7 +570,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
 @implementation FLTVideoPlayerPlugin
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
   FlutterMethodChannel* channel =
-      [FlutterMethodChannel methodChannelWithName:@"flutter.io/videoPlayer"
+      [FlutterMethodChannel methodChannelWithName:@"better_player_channel"
                                   binaryMessenger:[registrar messenger]];
   FLTVideoPlayerPlugin* instance = [[FLTVideoPlayerPlugin alloc] initWithRegistrar:registrar];
   [registrar addMethodCallDelegate:instance channel:channel];
@@ -552,7 +601,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
   int64_t textureId = [_registry registerTexture:player];
   frameUpdater.textureId = textureId;
   FlutterEventChannel* eventChannel = [FlutterEventChannel
-      eventChannelWithName:[NSString stringWithFormat:@"flutter.io/videoPlayer/videoEvents%lld",
+      eventChannelWithName:[NSString stringWithFormat:@"better_player_channel/videoEvents%lld",
                                                       textureId]
            binaryMessenger:_messenger];
   [eventChannel setStreamHandler:player];
@@ -588,6 +637,10 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
       NSString* assetArg = dataSource[@"asset"];
       NSString* uriArg = dataSource[@"uri"];
       NSString* key = dataSource[@"key"];
+      NSDictionary* headers = dataSource[@"headers"];
+      if (headers == nil){
+          headers = @{};
+      }
       if (assetArg) {
         NSString* assetPath;
         NSString* package = dataSource[@"package"];
@@ -598,7 +651,7 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
         }
         [player setDataSourceAsset:assetPath withKey:key];
       } else if (uriArg) {
-        [player setDataSourceURL:[NSURL URLWithString:uriArg] withKey:key];
+          [player setDataSourceURL:[NSURL URLWithString:uriArg] withKey:key withHeaders:headers];
       } else {
         result(FlutterMethodNotImplemented);
       }
@@ -640,7 +693,10 @@ static inline CGFloat radiansToDegrees(CGFloat radians) {
     } else if ([@"pause" isEqualToString:call.method]) {
       [player pause];
       result(nil);
-    } else {
+    } else if ([@"setSpeed" isEqualToString:call.method]) {
+          [player setSpeed:[[argsMap objectForKey:@"speed"] doubleValue] result:result];
+          return;
+    }else {
       result(FlutterMethodNotImplemented);
     }
   }
