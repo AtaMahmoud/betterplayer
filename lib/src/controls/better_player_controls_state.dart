@@ -1,5 +1,7 @@
 import 'package:better_player/better_player.dart';
 import 'package:better_player/src/controls/better_player_clickable_widget.dart';
+import 'package:better_player/src/core/better_player_utils.dart';
+import 'package:better_player/src/hls/better_player_hls_track.dart';
 import 'package:better_player/src/video_player/video_player.dart';
 import 'package:flutter/material.dart';
 
@@ -25,14 +27,29 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
   }
 
   Widget _buildMoreOptionsList() {
+    var controlsConfiguration = getBetterPlayerController()
+        .betterPlayerConfiguration
+        .controlsConfiguration;
     return SingleChildScrollView(
       child: Container(
         child: Column(
           children: [
-            _buildMoreOptionsListRow(Icons.shutter_speed, "Playback speed", () {
-              Navigator.of(context).pop();
-              _showSpeedChooserWidget();
-            })
+            if (controlsConfiguration.enablePlaybackSpeed)
+              _buildMoreOptionsListRow(Icons.shutter_speed, "Playback speed",
+                  () {
+                Navigator.of(context).pop();
+                _showSpeedChooserWidget();
+              }),
+            if (controlsConfiguration.enableSubtitles)
+              _buildMoreOptionsListRow(Icons.text_fields, "Subtitles", () {
+                Navigator.of(context).pop();
+                _showSubtitlesSelectionWidget();
+              }),
+            if (controlsConfiguration.enableTracks)
+              _buildMoreOptionsListRow(Icons.hd, "Quality", () {
+                Navigator.of(context).pop();
+                _showTracksSelectionWidget();
+              })
           ],
         ),
       ),
@@ -119,8 +136,13 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
         return true;
       }
 
-      var position = latestValue.position;
-      var bufferedEndPosition = latestValue.buffered.last.end;
+      Duration position = latestValue.position;
+
+      Duration bufferedEndPosition;
+      if (latestValue.buffered?.isNotEmpty == true) {
+        bufferedEndPosition = latestValue.buffered.last.end;
+      }
+
       if (position != null && bufferedEndPosition != null) {
         var difference = bufferedEndPosition - position;
 
@@ -132,5 +154,138 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
       }
     }
     return false;
+  }
+
+  void _showSubtitlesSelectionWidget() {
+    var subtitles =
+        List.of(getBetterPlayerController().betterPlayerSubtitlesSourceList);
+    var noneSubtitlesElementExists = subtitles?.firstWhere(
+            (source) => source.type == BetterPlayerSubtitlesSourceType.NONE,
+            orElse: () => null) !=
+        null;
+    if (!noneSubtitlesElementExists) {
+      subtitles?.add(BetterPlayerSubtitlesSource(
+          type: BetterPlayerSubtitlesSourceType.NONE));
+    }
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          bottom: true,
+          child: SingleChildScrollView(
+            child: Column(
+              children: subtitles
+                  .map((source) => _buildSubtitlesSourceRow(source))
+                  .toList(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSubtitlesSourceRow(BetterPlayerSubtitlesSource subtitlesSource) {
+    assert(subtitlesSource != null, "SubtitleSource can't be null");
+
+    var selectedSourceType =
+        getBetterPlayerController().betterPlayerSubtitlesSource;
+    bool isSelected = (subtitlesSource == selectedSourceType) ||
+        (subtitlesSource.type == BetterPlayerSubtitlesSourceType.NONE &&
+            subtitlesSource?.type == selectedSourceType.type);
+
+    return BetterPlayerMaterialClickableWidget(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Row(
+          children: [
+            const SizedBox(width: 16),
+            Text(
+              subtitlesSource.type == BetterPlayerSubtitlesSourceType.NONE
+                  ? "None"
+                  : subtitlesSource.name ?? "Default subtitles",
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+      onTap: () {
+        Navigator.of(context).pop();
+        getBetterPlayerController().setupSubtitleSource(subtitlesSource);
+      },
+    );
+  }
+
+  void _showTracksSelectionWidget() {
+    print("BETTER PLAYER DATA SOURCE: " +
+        getBetterPlayerController().betterPlayerDataSource.toString());
+
+    List<String> trackNames =
+        getBetterPlayerController().betterPlayerDataSource.hlsTrackNames ??
+            List();
+    List<BetterPlayerHlsTrack> tracks =
+        getBetterPlayerController().betterPlayerTracks;
+    var children = List<Widget>();
+    for (var index = 0; index < tracks.length; index++) {
+      var preferredName = trackNames.length > index ? trackNames[index] : null;
+      children.add(_buildTrackRow(tracks[index], preferredName));
+    }
+
+    if (children.isEmpty) {
+      children.add(_buildTrackRow(BetterPlayerHlsTrack(0, 0, 0), "Default"));
+    }
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          top: false,
+          bottom: true,
+          child: SingleChildScrollView(
+            child: Column(
+              children: children,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTrackRow(BetterPlayerHlsTrack track, String preferredName) {
+    assert(track != null, "Track can't be null");
+
+    String trackName = preferredName ??
+        track.width.toString() +
+            "x" +
+            track.height.toString() +
+            " " +
+            BetterPlayerUtils.formatBitrate(track.bitrate);
+
+    var selectedTrack = getBetterPlayerController().betterPlayerTrack;
+    bool isSelected = selectedTrack != null && selectedTrack == track;
+
+    return BetterPlayerMaterialClickableWidget(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Row(
+          children: [
+            const SizedBox(width: 16),
+            Text(
+              "$trackName",
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+      onTap: () {
+        Navigator.of(context).pop();
+        getBetterPlayerController().setTrack(track);
+      },
+    );
   }
 }

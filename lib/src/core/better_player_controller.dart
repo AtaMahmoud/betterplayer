@@ -6,6 +6,8 @@ import 'package:better_player/src/configuration/better_player_configuration.dart
 import 'package:better_player/src/configuration/better_player_event.dart';
 import 'package:better_player/src/configuration/better_player_event_type.dart';
 import 'package:better_player/src/core/better_player_controller_provider.dart';
+import 'package:better_player/src/hls/better_player_hls_track.dart';
+import 'package:better_player/src/hls/better_player_hls_utils.dart';
 import 'package:better_player/src/subtitles/better_player_subtitle.dart';
 import 'package:better_player/src/subtitles/better_player_subtitles_factory.dart';
 import 'package:better_player/src/video_player/video_player.dart';
@@ -17,10 +19,10 @@ class BetterPlayerController extends ChangeNotifier {
   static const _progressParameter = "progress";
   static const _volumeParameter = "volume";
   static const _speedParameter = "speed";
+  static const _hlsExtension = "m3u8";
 
   final BetterPlayerConfiguration betterPlayerConfiguration;
   final BetterPlayerPlaylistConfiguration betterPlayerPlaylistConfiguration;
-  final BetterPlayerDataSource betterPlayerDataSource;
 
   VideoPlayerController videoPlayerController;
 
@@ -65,7 +67,26 @@ class BetterPlayerController extends ChangeNotifier {
 
   BetterPlayerDataSource _betterPlayerDataSource;
 
-  List<BetterPlayerSubtitle> subtitles = List();
+  BetterPlayerDataSource get betterPlayerDataSource => _betterPlayerDataSource;
+
+  List<BetterPlayerSubtitlesSource> _betterPlayerSubtitlesSourceList = List();
+
+  List<BetterPlayerSubtitlesSource> get betterPlayerSubtitlesSourceList =>
+      _betterPlayerSubtitlesSourceList;
+  BetterPlayerSubtitlesSource _betterPlayerSubtitlesSource;
+
+  BetterPlayerSubtitlesSource get betterPlayerSubtitlesSource =>
+      _betterPlayerSubtitlesSource;
+
+  List<BetterPlayerSubtitle> subtitlesLines = List();
+
+  List<BetterPlayerHlsTrack> _betterPlayerTracks = List();
+
+  List<BetterPlayerHlsTrack> get betterPlayerTracks => _betterPlayerTracks;
+
+  BetterPlayerHlsTrack _betterPlayerTrack;
+
+  BetterPlayerHlsTrack get betterPlayerTrack => _betterPlayerTrack;
 
   Timer _nextVideoTimer;
 
@@ -75,13 +96,17 @@ class BetterPlayerController extends ChangeNotifier {
 
   bool _disposed = false;
 
-  BetterPlayerController(this.betterPlayerConfiguration,
-      {this.betterPlayerPlaylistConfiguration, this.betterPlayerDataSource})
-      : assert(betterPlayerConfiguration != null,
+  bool _wasPlayingBeforePause = false;
+
+  BetterPlayerController(
+    this.betterPlayerConfiguration, {
+    this.betterPlayerPlaylistConfiguration,
+    BetterPlayerDataSource betterPlayerDataSource,
+  }) : assert(betterPlayerConfiguration != null,
             "BetterPlayerConfiguration can't be null") {
     _eventListeners.add(eventListener);
     if (betterPlayerDataSource != null) {
-      _setup(betterPlayerDataSource);
+      setupDataSource(betterPlayerDataSource);
     }
   }
 
@@ -92,21 +117,74 @@ class BetterPlayerController extends ChangeNotifier {
     return betterPLayerControllerProvider.controller;
   }
 
-  Future _setup(BetterPlayerDataSource dataSource) async {
-    _betterPlayerDataSource = dataSource;
-    if (dataSource.subtitles != null) {
-      subtitles.clear();
-      BetterPlayerSubtitlesFactory.parseSubtitles(dataSource.subtitles)
-          .then((data) {
-        subtitles.addAll(data);
+  Future setupDataSource(BetterPlayerDataSource betterPlayerDataSource) async {
+    assert(
+        betterPlayerDataSource != null, "BetterPlayerDataSource can't be null");
+
+    _betterPlayerDataSource = betterPlayerDataSource;
+
+    ///Build videoPlayerController if null
+    if (videoPlayerController == null) {
+      videoPlayerController = VideoPlayerController();
+    }
+
+    ///Clear hls tracks
+    betterPlayerTracks.clear();
+
+    ///Setup subtitles
+    var betterPlayerSubtitlesSource = betterPlayerDataSource.subtitles;
+    if (betterPlayerSubtitlesSource != null) {
+      _betterPlayerSubtitlesSourceList.add(betterPlayerDataSource.subtitles);
+    } else {
+      betterPlayerSubtitlesSource = BetterPlayerSubtitlesSource(
+          type: BetterPlayerSubtitlesSourceType.NONE);
+    }
+
+    /// Load hls tracks
+    if (betterPlayerDataSource.url.contains(_hlsExtension)) {
+      _betterPlayerTracks =
+          await BetterPlayerHlsUtils.parseTracks(betterPlayerDataSource.url);
+    }
+
+    /// Load hls subtitles
+    if (betterPlayerDataSource.useHlsSubtitles &&
+        betterPlayerDataSource.url.contains(_hlsExtension)) {
+      var hlsSubtitles =
+          await BetterPlayerHlsUtils.parseSubtitles(betterPlayerDataSource.url);
+      hlsSubtitles?.forEach((hlsSubtitle) {
+        _betterPlayerSubtitlesSourceList.add(
+          BetterPlayerSubtitlesSource(
+              type: BetterPlayerSubtitlesSourceType.NETWORK,
+              name: hlsSubtitle.name,
+              urls: hlsSubtitle.realUrls),
+        );
       });
     }
-    videoPlayerController = VideoPlayerController();
 
-    setupDataSource(betterPlayerDataSource);
+    ///Process data source
+    _setupDataSource(betterPlayerDataSource);
+
+    ///Setup subtitles (none is default)
+    setupSubtitleSource(betterPlayerSubtitlesSource);
   }
 
-  void setupDataSource(BetterPlayerDataSource betterPlayerDataSource) async {
+  ///Setup subtitles to be displayed from given subtitle source
+  void setupSubtitleSource(BetterPlayerSubtitlesSource subtitlesSource) async {
+    assert(subtitlesSource != null, "SubtitlesSource can't be null");
+    _betterPlayerSubtitlesSource = subtitlesSource;
+    subtitlesLines.clear();
+    if (subtitlesSource.type != BetterPlayerSubtitlesSourceType.NONE) {
+      var subtitlesParsed =
+          await BetterPlayerSubtitlesFactory.parseSubtitles(subtitlesSource);
+      subtitlesLines.addAll(subtitlesParsed);
+    }
+    _postEvent(BetterPlayerEvent(BetterPlayerEventType.CHANGED_SUBTITLES));
+    if (!_disposed) {
+      notifyListeners();
+    }
+  }
+
+  void _setupDataSource(BetterPlayerDataSource betterPlayerDataSource) async {
     switch (betterPlayerDataSource.type) {
       case BetterPlayerDataSourceType.NETWORK:
         videoPlayerController.setNetworkDataSource(
@@ -318,6 +396,39 @@ class BetterPlayerController extends ChangeNotifier {
     _nextVideoTime = 0;
     nextVideoTimeStreamController.add(_nextVideoTime);
     cancelNextVideoTimer();
+  }
+
+  ///Setup track parameters for currently played video
+  void setTrack(BetterPlayerHlsTrack track) {
+    _postEvent(BetterPlayerEvent(BetterPlayerEventType.CHANGED_TRACK));
+
+    ///Default element clicked:
+    if (track.width == 0 && track.height == 0 && track.bitrate == 0) {
+      return;
+    }
+    videoPlayerController.setTrackParameters(
+        track.width, track.height, track.bitrate);
+    _betterPlayerTrack = track;
+  }
+
+  void onPlayerVisibilityChanged(double visibilityFraction) async {
+    if (_disposed) {
+      return;
+    }
+    if (betterPlayerConfiguration.playerVisibilityChangedBehavior != null) {
+      betterPlayerConfiguration
+          .playerVisibilityChangedBehavior(visibilityFraction);
+      print("Passed value!");
+    } else {
+      if (visibilityFraction == 0) {
+        _wasPlayingBeforePause = await isPlaying();
+        pause();
+      } else {
+        if (_wasPlayingBeforePause && !(await isPlaying())) {
+          play();
+        }
+      }
+    }
   }
 
   @override

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:better_player/src/controls/better_player_controls_configuration.dart';
 import 'package:better_player/src/controls/better_player_cupertino_controls.dart';
@@ -33,13 +34,27 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
   @override
   void initState() {
     playerVisibilityStreamController.add(true);
+    widget.controller.addListener(_onControllerChanged);
     super.initState();
+  }
+
+  @override
+  void didUpdateWidget(BetterPlayerWithControls oldWidget) {
+    if (oldWidget.controller != widget.controller) {
+      widget.controller.addListener(_onControllerChanged);
+    }
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
   void dispose() {
     playerVisibilityStreamController.close();
+    widget.controller.removeListener(_onControllerChanged);
     super.dispose();
+  }
+
+  void _onControllerChanged() {
+    setState(() {});
   }
 
   @override
@@ -62,25 +77,32 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
 
   Container _buildPlayerWithControls(
       BetterPlayerController betterPlayerController, BuildContext context) {
+    var configuration = betterPlayerController.betterPlayerConfiguration;
+    var rotation = configuration.rotation;
+
+    if (!(rotation <= 360 && rotation % 90 == 0)){
+      print("Invalid rotation provided. Using rotation = 0");
+      rotation = 0;
+    }
     return Container(
       child: Stack(
         fit: StackFit.passthrough,
         children: <Widget>[
           betterPlayerController.placeholder ?? Container(),
-          _BetterPlayerVideoFitWidget(
-            betterPlayerController,
-            betterPlayerController.betterPlayerConfiguration.fit,
+          Transform.rotate(
+            angle: rotation * pi / 180,
+            child: _BetterPlayerVideoFitWidget(
+              betterPlayerController,
+              betterPlayerController.betterPlayerConfiguration.fit,
+            ),
           ),
           betterPlayerController.overlay ?? Container(),
-          betterPlayerController.betterPlayerDataSource.subtitles != null
-              ? BetterPlayerSubtitlesDrawer(
-                  betterPlayerController: betterPlayerController,
-                  betterPlayerSubtitlesConfiguration: subtitlesConfiguration,
-                  subtitles: betterPlayerController.subtitles,
-                  playerVisibilityStream:
-                      playerVisibilityStreamController.stream,
-                )
-              : const SizedBox(),
+          BetterPlayerSubtitlesDrawer(
+            betterPlayerController: betterPlayerController,
+            betterPlayerSubtitlesConfiguration: subtitlesConfiguration,
+            subtitles: betterPlayerController.subtitlesLines,
+            playerVisibilityStream: playerVisibilityStreamController.stream,
+          ),
           _buildControls(context, betterPlayerController),
         ],
       ),

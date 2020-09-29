@@ -14,7 +14,7 @@ class _OtherPageState extends State<OtherPage> {
     var dataSource = BetterPlayerDataSource(
       BetterPlayerDataSourceType.NETWORK,
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-      subtitles: BetterPlayerSubtitlesSource(
+      subtitles: BetterPlayerSubtitlesSource.single(
         type: BetterPlayerSubtitlesSourceType.NETWORK,
         url:
             "https://dl.dropboxusercontent.com/s/71nzjo2ux3evxqk/example_subtitles.srt",
@@ -22,27 +22,34 @@ class _OtherPageState extends State<OtherPage> {
     );
 
     _betterPlayerController = BetterPlayerController(
-        BetterPlayerConfiguration(
-          controlsConfiguration:
-              BetterPlayerControlsConfiguration(enableProgressText: true),
-        ),
-        betterPlayerDataSource: dataSource);
+      BetterPlayerConfiguration(
+        controlsConfiguration:
+            BetterPlayerControlsConfiguration(enableProgressText: true),
+      ),
+    );
     _betterPlayerController.addEventsListener((event) {
       print("Better player event: ${event.betterPlayerEventType}");
     });
+    _betterPlayerController.setupDataSource(dataSource);
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text("Other page"),
+      appBar: AppBar(
+        title: Text("Other page"),
+      ),
+      body: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: BetterPlayer.network(
+          "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+          betterPlayerConfiguration: BetterPlayerConfiguration(
+            aspectRatio: 16 / 9,
+          ),
         ),
-        body: AspectRatio(
-          aspectRatio: 16 / 9,
-          child: BetterPlayer(controller: _betterPlayerController),
-        ));
+      ),
+    );
   }
 
   @override
@@ -50,5 +57,4 @@ class _OtherPageState extends State<OtherPage> {
     _betterPlayerController.dispose();
     super.dispose();
   }
-
 }

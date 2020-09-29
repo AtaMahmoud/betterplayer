@@ -19,10 +19,12 @@ This plugin is based on [Chewie](https://github.com/brianegan/chewie). Chewie is
 ✔️ Refactored player controls  
 ✔️ Playlist support  
 ✔️ Video in ListView support  
-✔️ Subtitles support (HTML tags support)  
+✔️ Subtitles support: (formats: SRT, WEBVTT with HTML tags support; subtitles from HLS)  
 ✔️ HTTP Headers support  
 ✔️ BoxFit of video support  
 ✔️ Playback speed support  
+✔️ HLS support (track, subtitles selection)
+
 
 ## Install
 
@@ -30,7 +32,7 @@ This plugin is based on [Chewie](https://github.com/brianegan/chewie). Chewie is
 
 ```yaml
 dependencies:
-  better_player: ^0.0.18
+  better_player: ^0.0.23
 ```
 
 2. Install it
@@ -45,10 +47,41 @@ $ flutter packages get
 import 'package:better_player/better_player.dart';
 ```
 
-## Usage
-Check [Example project](https://github.com/jhomlala/betterplayer/tree/master/example).
+## General Usage
+Check [Example project](https://github.com/jhomlala/betterplayer/tree/master/example) which shows how to use Better Player in different scenarios.
 
 ### Basic usage
+There are 2 basic methods which you can use to setup Better Player:
+```dart
+BetterPlayer.network(url, configuration)
+BetterPlayer.file(url, configuration)
+```
+There methods setup basic configuration for you and allows you to start using player in few seconds.
+Here is an example:
+```dart
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Example player"),
+      ),
+      body: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: BetterPlayer.network(
+          "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+          betterPlayerConfiguration: BetterPlayerConfiguration(
+            aspectRatio: 16 / 9,
+          ),
+        ),
+      ),
+    );
+  }
+```
+In this example, we're just showing video from url with aspect ratio = 16/9.
+Better Player has many more configuration options which are presented below.
+
+
+### Normal usage
 
 Create BetterPlayerDataSource and BetterPlayerController. You should do it in initState:
 ```dart
@@ -146,7 +179,7 @@ Network subtitles:
     var dataSource = BetterPlayerDataSource(
       BetterPlayerDataSourceType.NETWORK,
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-      subtitles: BetterPlayerSubtitlesSource(
+      subtitles: BetterPlayerSubtitlesSource.single(
           type: BetterPlayerSubtitlesSourceType.NETWORK,
           url:
               "https://dl.dropboxusercontent.com/s/71nzjo2ux3evxqk/example_subtitles.srt"),
@@ -158,7 +191,7 @@ File subtitles:
  var dataSource = BetterPlayerDataSource(
       BetterPlayerDataSourceType.FILE,
       "${directory.path}/testvideo.mp4",
-      subtitles: BetterPlayerSubtitlesSource(
+      subtitles: BetterPlayerSubtitlesSource.single(
         type: BetterPlayerSubtitlesSourceType.FILE,
         url: "${directory.path}/example_subtitles.srt",
       ),
@@ -234,6 +267,13 @@ Possible configuration options:
     ///Defines fit of the video, allows to fix video stretching, see possible
     ///values here: https://api.flutter.dev/flutter/painting/BoxFit-class.html
     final BoxFit fit;
+
+    ///Defines rotation of the video in degrees. Default value is 0. Can be 0, 90, 180, 270.
+    ///Angle will rotate only video box, controls will be in the same place.
+    final double rotation;
+    
+    ///Defines function which will react on player visibility changed
+    final Function(double visibilityFraction) playerVisibilityChangedBehavior;
 ```
 
 ### BetterPlayerSubtitlesConfiguration
@@ -380,6 +420,9 @@ Possible configuration options:
 
   ///Flag used to show/hide playback speed
   final bool enablePlaybackSpeed;
+
+  ///Flag used to show/hide subtitles
+  final bool enableSubtitles;
 ```
 
 ### BetterPlayerPlaylistConfiguration
@@ -431,6 +474,16 @@ Possible configuration options:
 
   /// Custom headers for player
   final Map<String, String> headers;
+
+  ///Should player use hls subtitles. Default is true.
+  final bool useHlsSubtitles;
+
+  ///Should player use hls tracks
+  final bool useHlsTracks;
+
+  ///List of strings that represents tracks names.
+  ///If empty, then better player will choose name based on track parameters
+  final List<String> hlsTrackNames;
 ```
 
 
@@ -467,7 +520,9 @@ You can listen to video player events like:
   PROGRESS,
   FINISHED,
   EXCEPTION,
-  SET_SPEED
+  SET_SPEED,
+  CHANGED_SUBTITLES
+  CHANGED_TRACK
 ```
 
 After creating BetterPlayerController you can add event listener this way:
@@ -477,6 +532,28 @@ After creating BetterPlayerController you can add event listener this way:
     });
 ```
 Your event listener will ne auto-disposed on dispose time :)
+
+
+### Change player behavior if player is not visible
+You can change player behavior if player is not visible by using playerVisibilityChangedBehavior option in BetterPlayerConfiguration.
+Here is an example for player used in list:
+```dart
+ void onVisibilityChanged(double visibleFraction) async {
+    bool isPlaying = await _betterPlayerController.isPlaying();
+    bool initialized = _betterPlayerController.isVideoInitialized();
+    if (visibleFraction >= widget.playFraction) {
+      if (widget.autoPlay && initialized && !isPlaying && !_isDisposing) {
+        _betterPlayerController.play();
+      }
+    } else {
+      if (widget.autoPause && initialized && isPlaying && !_isDisposing) {
+        _betterPlayerController.pause();
+      }
+    }
+  }
+```
+Player behavior works in the basis of VisibilityDetector (it uses visibilityFraction, which is value from 0.0 to 1.0 that describes how much given widget is on the viewport). So if value 0.0, player is not visible, so we need to pause the video. If the visibilityFraction is 1.0, we need to play it again.
+
 
 
 ### More documentation

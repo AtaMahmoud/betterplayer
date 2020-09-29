@@ -496,6 +496,17 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     await _applySpeed();
   }
 
+  /// Sets the video track parameters of [this]
+  ///
+  /// [width] specifies width of the selected track
+  /// [height] specifies height of the selected track
+  /// [bitrate] specifies bitrate of the selected track
+  Future<void> setTrackParameters(
+      int width, int height, int bitrate) async {
+    await _videoPlayerPlatform.setTrackParameters(
+        _textureId, width, height, bitrate);
+  }
+
   /// The closed caption based on the current [position] in the video.
   ///
   /// If there are no closed captions at the current [position], this will

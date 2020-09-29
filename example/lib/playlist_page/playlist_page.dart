@@ -18,20 +18,24 @@ class _PlaylistPageState extends State<PlaylistPage> {
 
     final directory = await getApplicationDocumentsDirectory();
 
-    dataSourceList.add(BetterPlayerDataSource(
+    dataSourceList.add(
+      BetterPlayerDataSource(
         BetterPlayerDataSourceType.NETWORK,
         "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-        subtitles: BetterPlayerSubtitlesSource(
+        subtitles: BetterPlayerSubtitlesSource.single(
             type: BetterPlayerSubtitlesSourceType.FILE,
-            url: "${directory.path}/example_subtitles.srt")));
+            url: "${directory.path}/example_subtitles.srt"),
+      ),
+    );
 
     dataSourceList.add(BetterPlayerDataSource(
         BetterPlayerDataSourceType.NETWORK,
         "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"));
-    dataSourceList.add(BetterPlayerDataSource(
-        BetterPlayerDataSourceType.NETWORK,
-        "http://sample.vodobox.com/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8",
-        liveStream: true));
+    dataSourceList.add(
+      BetterPlayerDataSource(BetterPlayerDataSourceType.NETWORK,
+          "http://sample.vodobox.com/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8",
+          liveStream: true),
+    );
 
     return dataSourceList;
   }
@@ -64,6 +68,7 @@ class _PlaylistPageState extends State<PlaylistPage> {
                 betterPlayerConfiguration: BetterPlayerConfiguration(
                     autoPlay: true,
                     aspectRatio: 1,
+                    rotation: 90,
                     fit: BoxFit.cover,
                     subtitlesConfiguration:
                         BetterPlayerSubtitlesConfiguration(fontSize: 10),
@@ -75,8 +80,7 @@ class _PlaylistPageState extends State<PlaylistPage> {
                     ]),
                 betterPlayerPlaylistConfiguration:
                     BetterPlayerPlaylistConfiguration(
-                      loopVideos: true,
-                        nextVideoDelay: Duration(seconds:5)),
+                        loopVideos: true, nextVideoDelay: Duration(seconds: 5)),
                 betterPlayerDataSourceList: snapshot.data,
               ),
               aspectRatio: 1,
