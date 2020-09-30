@@ -1,3 +1,13 @@
+## 0.0.25
+* [BREAKING_CHANGE]: changed API in BetterPlayerControlsConfiguration: enableQualities replaces enableTracks.
+* Added support for different video resolutions
+* Fixed issue when full screen is being dismissed on changing subtitles
+* Added CHANGED_RESOLUTION event
+
+## 0.0.24
+* Added possibility to set multiple subtitles to video
+* [BREAKING_CHANGE]: changed API in BetterPlayerDataSource. Instead of one subtitles object, list of subtitles is required.
+
 ## 0.0.23
 * General bug fixes.
 * Added playerVisibilityChangedBehavior in BetterPlayerConfiguration.
