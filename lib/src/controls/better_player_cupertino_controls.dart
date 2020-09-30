@@ -97,7 +97,11 @@ class _BetterPlayerCupertinoControlsState
   }
 
   void _dispose() {
-    _controller.removeListener(_updateState);
+    try {
+      _controller.removeListener(_updateState);
+    } catch (error) {
+      print("Error ==> $error");
+    }
     _hideTimer?.cancel();
     _expandCollapseTimer?.cancel();
     _initTimer?.cancel();
@@ -461,13 +465,14 @@ class _BetterPlayerCupertinoControlsState
               ? _buildMuteButton(_controller, backgroundColor, iconColor,
                   barHeight, buttonPadding)
               : const SizedBox(),
-          _buildMoreButton(
-            _controller,
-            backgroundColor,
-            iconColor,
-            barHeight,
-            buttonPadding,
-          )
+          if (_controlsConfiguration.enableMore)
+            _buildMoreButton(
+              _controller,
+              backgroundColor,
+              iconColor,
+              barHeight,
+              buttonPadding,
+            )
         ],
       ),
     );

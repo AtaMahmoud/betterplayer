@@ -62,7 +62,7 @@ class _BetterPlayerMaterialControlsState
           absorbing: _hideStuff,
           child: Column(
             children: [
-              _buildTopBar(),
+              if (_controlsConfiguration.enableMore) _buildTopBar(),
               isLoading(_latestValue)
                   ? Expanded(child: Center(child: _buildLoadingWidget()))
                   : _buildHitArea(),

@@ -139,7 +139,7 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
       Duration position = latestValue.position;
 
       Duration bufferedEndPosition;
-      if (latestValue.buffered?.isNotEmpty == true) {
+      if (latestValue.buffered.length >= 1) {
         bufferedEndPosition = latestValue.buffered.last.end;
       }
 

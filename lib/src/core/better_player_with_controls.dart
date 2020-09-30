@@ -34,7 +34,11 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
   @override
   void initState() {
     playerVisibilityStreamController.add(true);
-    widget.controller.addListener(_onControllerChanged);
+    try {
+      widget.controller.addListener(_onControllerChanged);
+    } catch (error) {
+      print("Error ==> $error");
+    }
     super.initState();
   }
 
@@ -80,7 +84,7 @@ class _BetterPlayerWithControlsState extends State<BetterPlayerWithControls> {
     var configuration = betterPlayerController.betterPlayerConfiguration;
     var rotation = configuration.rotation;
 
-    if (!(rotation <= 360 && rotation % 90 == 0)){
+    if (!(rotation <= 360 && rotation % 90 == 0)) {
       print("Invalid rotation provided. Using rotation = 0");
       rotation = 0;
     }
@@ -186,7 +190,11 @@ class _BetterPlayerVideoFitWidgetState
         setState(() {});
       }
     };
-    controller.addListener(_initializedListener);
+    try {
+      controller.addListener(_initializedListener);
+    } catch (error) {
+      print("Error ==> $error");
+    }
   }
 
   @override

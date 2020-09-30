@@ -44,12 +44,20 @@ class _VideoProgressBarState
   @override
   void initState() {
     super.initState();
-    controller.addListener(listener);
+    try {
+      controller.addListener(listener);
+    } catch (error) {
+      print("Error ==> $error");
+    }
   }
 
   @override
   void deactivate() {
-    controller.removeListener(listener);
+    try {
+      controller.removeListener(listener);
+    } catch (error) {
+      print("Error ==> $error");
+    }
     super.deactivate();
   }
 
@@ -68,7 +76,7 @@ class _VideoProgressBarState
       final nBox = context.findRenderObject() as RenderBox;
       final Offset nTapPos = nBox.globalToLocal(newPosition);
       final double nRelative = nTapPos.dx / nBox.size.width;
-      final Duration nPosition = controller.value.duration * nRelative;
+      final Duration nPosition = controller.value.duration ?? 0 * nRelative;
 
       return nPosition.inSeconds < controller.value.position.inSeconds
           ? true

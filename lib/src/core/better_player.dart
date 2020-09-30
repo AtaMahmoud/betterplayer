@@ -67,7 +67,11 @@ class BetterPlayerState extends State<BetterPlayer> {
   }
 
   void _setup() async {
-    widget.controller.addListener(listener);
+    try {
+      widget.controller.addListener(listener);
+    } catch (error) {
+      print("Error ==> $error");
+    }
   }
 
   @override
