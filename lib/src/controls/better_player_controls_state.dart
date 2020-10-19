@@ -231,6 +231,7 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
     var children = List<Widget>();
     for (var index = 0; index < tracks.length; index++) {
       var preferredName = trackNames.length > index ? trackNames[index] : null;
+      if (tracks[index].width == null || tracks[index].height == null) continue;
       children.add(_buildTrackRow(tracks[index], preferredName));
     }
     var resolutions =
