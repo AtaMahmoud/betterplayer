@@ -203,7 +203,7 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
             const SizedBox(width: 16),
             Text(
               subtitlesSource.type == BetterPlayerSubtitlesSourceType.NONE
-                  ? "None"
+                  ? "OFF"
                   : subtitlesSource.name ?? "Default subtitles",
               style: TextStyle(
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
