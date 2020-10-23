@@ -3,7 +3,6 @@
 </p>
 
 # Better Player
-
 [![pub package](https://img.shields.io/pub/v/better_player.svg)](https://pub.dartlang.org/packages/better_player)
 [![pub package](https://img.shields.io/github/license/jhomlala/betterplayer.svg?style=flat)](https://github.com/jhomlala/betterplayer)
 [![pub package](https://img.shields.io/badge/platform-flutter-blue.svg)](https://github.com/jhomlala/betterplayer)
@@ -34,7 +33,11 @@ This plugin is based on [Chewie](https://github.com/brianegan/chewie). Chewie is
 
 ```yaml
 dependencies:
+<<<<<<< HEAD
   better_player: ^0.0.26
+=======
+  better_player: ^0.0.29+1
+>>>>>>> baseplayer/master
 ```
 
 2. Install it
@@ -275,6 +278,11 @@ Possible configuration options:
     /// Defines if the player will sleep in fullscreen or not
     final bool allowedScreenSleep;
 
+    /// Defines aspect ratio which will be used in fullscreen
+    final double fullScreenAspectRatio;
+
+    /// Defines the set of allowed device orientations on entering fullscreen
+    final List<DeviceOrientation> deviceOrientationsOnFullScreen;
 
     /// Defines the system overlays visible after exiting fullscreen
     final List<SystemUiOverlay> systemOverlaysAfterFullScreen;
@@ -304,6 +312,10 @@ Possible configuration options:
     
     ///Defines function which will react on player visibility changed
     final Function(double visibilityFraction) playerVisibilityChangedBehavior;
+
+    ///Defines translations used in player. If null, then default english translations
+    ///will be used.
+    final List<BetterPlayerTranslations> translations;
 ```
 
 ### BetterPlayerSubtitlesConfiguration
@@ -345,21 +357,25 @@ Possible configuration options:
 
   ///Bottom padding of the subtitle
   final double bottomPadding;
+
+  ///Alignment of the subtitle
+  final Alignment alignment;
+
+  ///Background color of the subtitle
+  final Color backgroundColor;
 ```
 
 ### BetterPlayerControlsConfiguration
 Configuration for player GUI. You should pass this configuration to BetterPlayerConfiguration.
 
 ```dart
-ar betterPlayerConfiguration = BetterPlayerConfiguration(
+var betterPlayerConfiguration = BetterPlayerConfiguration(
       controlsConfiguration: BetterPlayerControlsConfiguration(
         textColor: Colors.black,
         iconsColor: Colors.black,
       ),
     );
 ```
-
-Possible configuration options:
 ```dart
   ///Color of the control bars
   final Color controlBarColor;
@@ -436,17 +452,12 @@ Possible configuration options:
   ///Control bar height
   final double controlBarHeight;
 
-  ///Default error widget text
-  final String defaultErrorText;
-
-  ///Default loading next video text
-  final String loadingNextVideoText;
-
-  ///Text displayed when asset displayed in player is live stream
-  final String liveText;
-
   ///Live text color;
   final Color liveTextColor;
+
+  ///Flag used to show/hide overflow menu which contains playback, subtitles,
+  ///qualities options.
+  final bool enableOverflowMenu;
 
   ///Flag used to show/hide playback speed
   final bool enablePlaybackSpeed;
@@ -456,6 +467,24 @@ Possible configuration options:
 
   ///Flag used to show/hide qualities
   final bool enableQualities;
+
+  ///Custom items of overflow menu
+  final List<BetterPlayerOverflowMenuItem> overflowMenuCustomItems;
+
+  ///Icon of the overflow menu
+  final IconData overflowMenuIcon;
+
+  ///Icon of the playback speed menu item from overflow menu
+  final IconData playbackSpeedIcon;
+
+  ///Icon of the subtitles menu item from overflow menu
+  final IconData subtitlesIcon;
+
+  ///Icon of the qualities menu item from overflow menu
+  final IconData qualitiesIcon;
+
+  ///Color of overflow menu icons
+  final Color overflowMenuIconsColor;
 ```
 
 ### BetterPlayerPlaylistConfiguration
@@ -542,10 +571,49 @@ Possible configuration options:
   final String content;
 ```
 
+### BetterPlayerTranslations
+You can provide translations for different languages. You need to pass list of BetterPlayerTranslations to
+the BetterPlayerConfiguration. Here is an example:
+
+```dart
+ translations: [
+              BetterPlayerTranslations(
+                languageCode: "language_code for example pl",
+                generalDefaultError: "translated text",
+                generalNone: "translated text",
+                generalDefault: "translated text",
+                playlistLoadingNextVideo: "translated text",
+                controlsLive: "translated text",
+                controlsNextVideoIn: "translated text",
+                overflowMenuPlaybackSpeed: "translated text",
+                overflowMenuSubtitles: "translated text",
+                overflowMenuQuality: "translated text",
+              ),
+              BetterPlayerTranslations(
+                languageCode: "other language for example cz",
+                generalDefaultError: "translated text",
+                generalNone: "translated text",
+                generalDefault: "translated text",
+                playlistLoadingNextVideo: "translated text",
+                controlsLive: "translated text",
+                controlsNextVideoIn: "translated text",
+                overflowMenuPlaybackSpeed: "translated text",
+                overflowMenuSubtitles: "translated text",
+                overflowMenuQuality: "translated text",
+              ),
+            ],
+```
+There are 4 pre build in languages: EN, PL, ZH (chinese simplified), HI (hindi). If you didn't provide
+any translation then EN translations will be used or any of the pre build in translations, only if it's
+match current user locale.
+
+You need to setup localizations in your app first to make it work. Here's how you can do that:
+https://flutter.dev/docs/development/accessibility-and-localization/internationalization
+
 ### Listen to video events
 You can listen to video player events like:
 ```dart
-  PLAY,
+PLAY,
   PAUSE,
   SEEK_TO,
   OPEN_FULLSCREEN,
@@ -554,11 +622,13 @@ You can listen to video player events like:
   PROGRESS,
   FINISHED,
   EXCEPTION,
+  CONTROLS_VISIBLE,
+  CONTROLS_HIDDEN,
   SET_SPEED,
-  CHANGED_SUBTITLES
-  CHANGED_TRACK
+  CHANGED_SUBTITLES,
+  CHANGED_TRACK,
   CHANGED_PLAYER_VISIBILITY,
-  CHANGED_RESOLUTION
+  CHANGED_RESOLUTION,
 ```
 
 After creating BetterPlayerController you can add event listener this way:
@@ -607,6 +677,20 @@ only for normal videos (non-hls) to setup different qualities of the original vi
           "EXTRA_LARGE":
               "https://file-examples-com.github.io/uploads/2017/04/file_example_MP4_1920_18MG.mp4"
         });
+```
+
+### Add custom element to overflow menu
+You can use BetterPlayerControlsConfiguration to add custom element to the overflow menu:
+```dart
+  controlsConfiguration: BetterPlayerControlsConfiguration(
+              overflowMenuCustomItems: [
+                BetterPlayerOverflowMenuItem(
+                  Icons.account_circle_rounded,
+                  "Custom element",
+                  () => print("Click!"),
+                )
+              ],
+            ),
 ```
 
 ### More documentation

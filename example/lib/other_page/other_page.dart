@@ -1,5 +1,6 @@
 import 'package:better_player/better_player.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class OtherPage extends StatefulWidget {
   @override
@@ -46,6 +47,23 @@ class _OtherPageState extends State<OtherPage> {
           "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
           betterPlayerConfiguration: BetterPlayerConfiguration(
             aspectRatio: 16 / 9,
+            fullScreenAspectRatio: 9 / 16,
+            allowedScreenSleep: false,
+            deviceOrientationsOnFullScreen: [
+              DeviceOrientation.portraitUp,
+              DeviceOrientation.portraitDown
+            ],
+            controlsConfiguration: BetterPlayerControlsConfiguration(
+              overflowMenuCustomItems: [
+                BetterPlayerOverflowMenuItem(
+                  Icons.account_circle_rounded,
+                  "Custom element",
+                  () {
+                    print("Click!");
+                  },
+                )
+              ],
+            ),
           ),
         ),
       ),

@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:better_player/src/controls/better_player_overflow_menu_item.dart';
 import 'package:flutter/material.dart';
 import 'package:open_iconic_flutter/open_iconic_flutter.dart';
 
@@ -79,15 +80,6 @@ class BetterPlayerControlsConfiguration {
   ///Control bar height
   final double controlBarHeight;
 
-  ///Default error widget text
-  final String defaultErrorText;
-
-  ///Default loading next video text
-  final String loadingNextVideoText;
-
-  ///Text displayed when asset displayed in player is live stream
-  final String liveText;
-
   ///Live text color;
   final Color liveTextColor;
 
@@ -96,6 +88,10 @@ class BetterPlayerControlsConfiguration {
 
   //flag used to enable disable skip forward
   final bool enableSkipForward;
+
+  ///Flag used to show/hide overflow menu which contains playback, subtitles,
+  ///qualities options.
+  final bool enableOverflowMenu;
 
   ///Flag used to show/hide playback speed
   final bool enablePlaybackSpeed;
@@ -108,6 +104,24 @@ class BetterPlayerControlsConfiguration {
 
   /// Flag used to enable more controls
   final bool enableMore;
+
+  ///Custom items of overflow menu
+  final List<BetterPlayerOverflowMenuItem> overflowMenuCustomItems;
+
+  ///Icon of the overflow menu
+  final IconData overflowMenuIcon;
+
+  ///Icon of the playback speed menu item from overflow menu
+  final IconData playbackSpeedIcon;
+
+  ///Icon of the subtitles menu item from overflow menu
+  final IconData subtitlesIcon;
+
+  ///Icon of the qualities menu item from overflow menu
+  final IconData qualitiesIcon;
+
+  ///Color of overflow menu icons
+  final Color overflowMenuIconsColor;
 
   const BetterPlayerControlsConfiguration({
     this.controlBarColor = Colors.black87,
@@ -135,16 +149,20 @@ class BetterPlayerControlsConfiguration {
     this.showControls = true,
     this.showControlsOnInitialize = true,
     this.controlBarHeight = 48.0,
-    this.defaultErrorText = "Video can't be played",
-    this.loadingNextVideoText = "Loading next video",
-    this.liveText = "LIVE",
     this.enableSkipBack = false,
     this.enableSkipForward = false,
     this.liveTextColor = Colors.red,
+    this.enableOverflowMenu = true,
     this.enablePlaybackSpeed = true,
     this.enableSubtitles = true,
     this.enableMore = true,
     this.enableQualities = true,
+    this.overflowMenuCustomItems = const [],
+    this.overflowMenuIcon = Icons.more_vert,
+    this.playbackSpeedIcon = Icons.shutter_speed,
+    this.qualitiesIcon = Icons.hd,
+    this.subtitlesIcon = Icons.text_fields,
+    this.overflowMenuIconsColor = Colors.black,
   });
 
   factory BetterPlayerControlsConfiguration.white() {

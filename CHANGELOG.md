@@ -1,3 +1,25 @@
+## 0.0.29+1
+* Updated readme
+
+## 0.0.29
+* Fixed routePageBuilder usage from BetterPlayerConfiguration
+* Added overflowMenuIcon, playbackSpeedIcon, qualitiesIcon, subtitlesIcon, overflowMenuIconsColor to BetterPlayerControlsConfiguration
+* Added double tap to play/pause video (original idea by https://github.com/r6c)
+
+## 0.0.28
+* Fixed subtitles overflow issue when transitioning between fullscreen and normal state
+* Added alignment and backgroundColor in BetterPlayerSubtitlesConfiguration
+
+## 0.0.27
+* Added enableOverflowMenu option in BetterPlayerControlsConfiguration (enable/disable overflow menu)
+* Added overflowMenuCustomItems in BetterPlayerControlsConfiguration (show custom menu items in overflow menu)
+* [BREAKING_CHANGE] Removed defaultErrorText, loadingNextVideoText, liveText from BetterPlayerControlsConfiguration. To change these values, please use translations in BetterPlayerConfiguration.
+* Added BetterPlayerTranslations in BetterPlayerConfiguration. You can use it to setup translations of the player.
+
+## 0.0.26
+* Added fullScreenAspectRatio and deviceOrientationsOnFullScreen to handle different full screen scenarios
+* Updated wakelock version
+
 ## 0.0.25
 * [BREAKING_CHANGE]: changed API in BetterPlayerControlsConfiguration: enableQualities replaces enableTracks.
 * Added support for different video resolutions

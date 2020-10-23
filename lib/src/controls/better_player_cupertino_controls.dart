@@ -69,8 +69,10 @@ class _BetterPlayerCupertinoControlsState
         _cancelAndRestartTimer();
       },
       child: GestureDetector(
-        onTap: () {
+        onTap: _cancelAndRestartTimer,
+        onDoubleTap: () {
           _cancelAndRestartTimer();
+          _onPlayPause();
         },
         child: AbsorbPointer(
           absorbing: _hideStuff,
@@ -188,7 +190,7 @@ class _BetterPlayerCupertinoControlsState
   Widget _buildLiveWidget() {
     return Expanded(
       child: Text(
-        _controlsConfiguration.liveText,
+        _betterPlayerController.translations.controlsLive,
         style: TextStyle(
             color: _controlsConfiguration.liveTextColor,
             fontWeight: FontWeight.bold),
@@ -289,7 +291,7 @@ class _BetterPlayerCupertinoControlsState
                   horizontal: buttonPadding,
                 ),
                 child: Icon(
-                  Icons.more_vert,
+                  _controlsConfiguration.overflowMenuIcon,
                   color: iconColor,
                   size: 16.0,
                 ),
@@ -354,7 +356,7 @@ class _BetterPlayerCupertinoControlsState
     double barHeight,
   ) {
     return GestureDetector(
-      onTap: _playPause,
+      onTap: _onPlayPause,
       child: Container(
         height: barHeight,
         color: Colors.transparent,
@@ -465,14 +467,16 @@ class _BetterPlayerCupertinoControlsState
               ? _buildMuteButton(_controller, backgroundColor, iconColor,
                   barHeight, buttonPadding)
               : const SizedBox(),
-          if (_controlsConfiguration.enableMore)
-            _buildMoreButton(
-              _controller,
-              backgroundColor,
-              iconColor,
-              barHeight,
-              buttonPadding,
-            )
+          _controlsConfiguration.enableOverflowMenu ||
+                  _controlsConfiguration.enableMore
+              ? _buildMoreButton(
+                  _controller,
+                  backgroundColor,
+                  iconColor,
+                  barHeight,
+                  buttonPadding,
+                )
+              : const SizedBox(),
         ],
       ),
     );
@@ -498,7 +502,7 @@ class _BetterPlayerCupertinoControlsState
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Text(
-                    "Next video in ${snapshot.data} ...",
+                    "${_betterPlayerController.translations.controlsNextVideoIn} ${snapshot.data} ...",
                     style: TextStyle(color: Colors.white),
                   ),
                 ),
@@ -577,7 +581,7 @@ class _BetterPlayerCupertinoControlsState
     );
   }
 
-  void _playPause() {
+  void _onPlayPause() {
     bool isFinished = false;
 
     if (_latestValue?.position != null && _latestValue?.duration != null) {
@@ -658,7 +662,7 @@ class _BetterPlayerCupertinoControlsState
               size: 42,
             ),
             Text(
-              _controlsConfiguration.defaultErrorText,
+              _betterPlayerController.translations.generalDefaultError,
               style: TextStyle(color: _controlsConfiguration.textColor),
             ),
           ],
@@ -669,8 +673,9 @@ class _BetterPlayerCupertinoControlsState
 
   Widget _buildLoadingWidget() {
     return CircularProgressIndicator(
-      valueColor:
-          AlwaysStoppedAnimation<Color>(_controlsConfiguration.controlBarColor),
+      valueColor: AlwaysStoppedAnimation<Color>(
+        _controlsConfiguration.controlBarColor,
+      ),
     );
   }
 

@@ -63,15 +63,15 @@ class BetterPlayerState extends State<BetterPlayer> {
   @override
   void initState() {
     super.initState();
-    _setup();
+    Future.delayed(Duration.zero, () {
+      _setup();
+    });
   }
 
   void _setup() async {
-    try {
-      widget.controller.addListener(onFullScreenChanged);
-    } catch (error) {
-      print("Error ==> $error");
-    }
+    widget.controller.addListener(onFullScreenChanged);
+    Locale locale = Localizations.localeOf(context) ?? Locale("en", "US");
+    widget.controller.setupTranslations(locale);
   }
 
   @override
@@ -152,11 +152,14 @@ class BetterPlayerState extends State<BetterPlayer> {
     var controllerProvider = BetterPlayerControllerProvider(
         controller: widget.controller, child: _buildPlayer());
 
-    if (widget.controller.routePageBuilder == null) {
+    var routePageBuilder =
+        widget.controller.betterPlayerConfiguration.routePageBuilder;
+    if (routePageBuilder == null) {
       return _defaultRoutePageBuilder(
           context, animation, secondaryAnimation, controllerProvider);
     }
-    return widget.controller.routePageBuilder(
+
+    return routePageBuilder(
         context, animation, secondaryAnimation, controllerProvider);
   }
 
@@ -170,10 +173,10 @@ class BetterPlayerState extends State<BetterPlayer> {
 
     SystemChrome.setEnabledSystemUIOverlays([]);
     if (isAndroid) {
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ]);
+      SystemChrome.setPreferredOrientations(
+        widget.controller.betterPlayerConfiguration
+            .deviceOrientationsOnFullScreen,
+      );
     }
 
     if (!widget.controller.allowedScreenSleep) {

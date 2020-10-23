@@ -30,26 +30,41 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
     var controlsConfiguration = getBetterPlayerController()
         .betterPlayerConfiguration
         .controlsConfiguration;
+
+    var translations = getBetterPlayerController().translations;
     return SingleChildScrollView(
       child: Container(
         child: Column(
           children: [
             if (controlsConfiguration.enablePlaybackSpeed)
-              _buildMoreOptionsListRow(Icons.shutter_speed, "Playback speed",
-                  () {
+              _buildMoreOptionsListRow(controlsConfiguration.playbackSpeedIcon,
+                  translations.overflowMenuPlaybackSpeed, () {
                 Navigator.of(context).pop();
                 _showSpeedChooserWidget();
               }),
             if (controlsConfiguration.enableSubtitles)
-              _buildMoreOptionsListRow(Icons.text_fields, "Subtitles", () {
+              _buildMoreOptionsListRow(controlsConfiguration.subtitlesIcon,
+                  translations.overflowMenuSubtitles, () {
                 Navigator.of(context).pop();
                 _showSubtitlesSelectionWidget();
               }),
             if (controlsConfiguration.enableQualities)
-              _buildMoreOptionsListRow(Icons.hd, "Quality", () {
+              _buildMoreOptionsListRow(controlsConfiguration.qualitiesIcon,
+                  translations.overflowMenuQuality, () {
                 Navigator.of(context).pop();
                 _showQualitiesSelectionWidget();
               }),
+            if (controlsConfiguration.overflowMenuCustomItems?.isNotEmpty)
+              ...controlsConfiguration.overflowMenuCustomItems.map(
+                (customItem) => _buildMoreOptionsListRow(
+                  customItem.icon,
+                  customItem.title,
+                  () {
+                    Navigator.of(context).pop();
+                    customItem.onClicked?.call();
+                  },
+                ),
+              )
           ],
         ),
       ),
@@ -66,7 +81,13 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         child: Row(
           children: [
-            Icon(icon),
+            Icon(
+              icon,
+              color: getBetterPlayerController()
+                  .betterPlayerConfiguration
+                  .controlsConfiguration
+                  .overflowMenuIconsColor,
+            ),
             const SizedBox(width: 16),
             Text(name),
           ],
@@ -203,8 +224,9 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
             const SizedBox(width: 16),
             Text(
               subtitlesSource.type == BetterPlayerSubtitlesSourceType.NONE
-                  ? "OFF"
-                  : subtitlesSource.name ?? "Default subtitles",
+                  ? getBetterPlayerController().translations.generalNone
+                  : subtitlesSource.name ??
+                      getBetterPlayerController().translations.generalDefault,
               style: TextStyle(
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
@@ -241,7 +263,8 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget>
     });
 
     if (children.isEmpty) {
-      children.add(_buildTrackRow(BetterPlayerHlsTrack(0, 0, 0), "Default"));
+      children.add(_buildTrackRow(BetterPlayerHlsTrack(0, 0, 0),
+          getBetterPlayerController().translations.generalDefault));
     }
 
     showModalBottomSheet(
