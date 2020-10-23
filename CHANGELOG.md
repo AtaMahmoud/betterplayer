@@ -1,3 +1,7 @@
+## 0.0.29+2
+* Version upgrade
+* control fixes
+
 ## 0.0.29+1
 * Updated readme
 

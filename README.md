@@ -33,11 +33,7 @@ This plugin is based on [Chewie](https://github.com/brianegan/chewie). Chewie is
 
 ```yaml
 dependencies:
-<<<<<<< HEAD
-  better_player: ^0.0.26
-=======
-  better_player: ^0.0.29+1
->>>>>>> baseplayer/master
+  better_player: ^0.0.29+2
 ```
 
 2. Install it
