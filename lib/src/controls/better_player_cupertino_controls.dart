@@ -467,8 +467,7 @@ class _BetterPlayerCupertinoControlsState
               ? _buildMuteButton(_controller, backgroundColor, iconColor,
                   barHeight, buttonPadding)
               : const SizedBox(),
-          _controlsConfiguration.enableOverflowMenu ||
-                  _controlsConfiguration.enableMore
+          _controlsConfiguration.enableOverflowMenu
               ? _buildMoreButton(
                   _controller,
                   backgroundColor,
